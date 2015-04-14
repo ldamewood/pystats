@@ -12,13 +12,13 @@ before_install:
   - chmod +x miniconda.sh
   - ./miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
-  - conda update -q conda
+  - conda update -q --yes conda
   - conda info -a
 
 install:
-  - conda create -q -n test python=$TRAVIS_PYTHON_VERSION
+  - conda create -q --yes -n test python=$TRAVIS_PYTHON_VERSION
   - source activate test
-  - conda install --yes numpy=$NUMPY scipy=$SCIPY
+  - conda install -q --yes numpy=$NUMPY scipy=$SCIPY
   - python setup.py install
 
 script:
