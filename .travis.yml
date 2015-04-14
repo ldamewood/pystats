@@ -1,16 +1,28 @@
-python:
-    - "2.7"
-    - "3.3"
+language: python
+
+matrix:
+  include:
+
+    - python: 2.7
+      env: NUMPY=1.9 SCIPY=0.15
+      
+    - python: 3.3
+      env: NUMPY=1.8 SCIPY=0.15
+
+before_install:
+
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda/bin:$PATH
+  - conda update --yes conda
+
 install:
-    # Install conda
-    - sudo pip install conda
-    # install deps
-    - sudo conda init
-    - sudo conda update conda --yes
-    - deps='pip numpy nose numpydoc'
-    - conda create -p $HOME/py --yes $deps "python=$TRAVIS_PYTHON_VERSION"
-    - export PATH=$HOME/py/bin:$PATH
-    # install your own package into the environment
-    - python setup.py install
+
+  - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
+  - source activate test
+  - conda install --yes numpy=$NUMPY scipy=$SCIPY
+
 script:
-    - "nosetests tests -v"
+
+  - nosetests tests -v
