@@ -12,8 +12,8 @@ import random
 M = 100
 n_exp = 200
 
-sums = pystats.StatsAccumulator()
-rolls = pystats.StatsAccumulator()
+sums = pystats.Accumulator()
+rolls = pystats.Accumulator()
 
 die = range(6)
 for i in xrange(n_exp):

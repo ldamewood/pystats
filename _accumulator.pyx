@@ -3,13 +3,12 @@ Adapted from http://www.johndcook.com/blog/skewness_kurtosis/
 """
 from __future__ import division
 
-from scipy.stats import distributions
+import scipy
+import scipy.stats
 
-import numpy as np
-import math
 cimport libc.math as cymath
 
-cdef class StatsAccumulator:
+cdef class Accumulator:
     cdef public long long n
     cdef public double M1, M2, M3, M4, M5, minimum, maximum
 
@@ -17,7 +16,7 @@ cdef class StatsAccumulator:
         self.clear()
 
         if init is not None:
-            if isinstance(init, StatsAccumulator):
+            if isinstance(init, Accumulator):
                 init.copy(out=self)
             elif hasattr(init, '__getitem__'):
                 self.from_list(init)
@@ -34,16 +33,16 @@ cdef class StatsAccumulator:
         self.n = len(lst)
         self.minimum = min(lst)
         self.maximum = max(lst)
-        self.M1 = np.mean(lst)
-        self.M2 = self.n * np.var(lst)
-        self.M3 = scipy.stats.skew(lst)*cymath.pow(self.M2, 1.5)
+        self.M1 = scipy.mean(lst)
+        self.M2 = self.n * scipy.var(lst)
+        self.M3 = scipy.skew(lst)*cymath.pow(self.M2, 1.5)
         self.M3 *= cymath.sqrt(1.*self.n)
-        self.M4 = (scipy.stats.kurtosis(lst) + 3.) * (self.M2*self.M2) / self.n
+        self.M4 = (scipy.kurtosis(lst) + 3.) * (self.M2*self.M2) / self.n
         self.M5 = sum(lst)
 
     def copy(self, out=None):
         if out is None:
-            out = StatsAccumulator()
+            out = Accumulator()
         out.n = self.n
         out.M1 = self.M1
         out.M2 = self.M2
@@ -76,7 +75,7 @@ cdef class StatsAccumulator:
         return self
 
     def __add__(a, b):
-        combined = StatsAccumulator()
+        combined = Accumulator()
 
         combined.n = a.n + b.n
 
@@ -93,13 +92,14 @@ cdef class StatsAccumulator:
         combined.M3 *= (a.n - b.n) / (combined.n*combined.n)
         combined.M3 += 3.0*delta * (a.n*b.M2 - b.n*a.M2) / combined.n
 
-        combined.M4 = a.M4 + b.M4 + delta4*a.n*b.n
-        combined.M4 *= (a.n*a.n - a.n*b.n + b.n*b.n)
-        combined.M4 /= (combined.n*combined.n*combined.n)
-        temp = 6.0*delta2 * (a.n*a.n*b.M2 + b.n*b.n*a.M2)
-        temp *= 1.0 / (combined.n*combined.n) + 4.0*delta*(a.n*b.M3 - b.n*a.M3)
-        temp /= combined.n
+        combined.M4 = a.M4 + b.M4
+        temp = delta4*a.n*b.n * (a.n*a.n - a.n*b.n + b.n*b.n)
+        temp /= (combined.n*combined.n*combined.n)
         combined.M4 += temp
+        temp = 6.0*delta2 * (a.n*a.n*b.M2 + b.n*b.n*a.M2)
+        temp /= (combined.n*combined.n)
+        combined.M4 += temp
+        combined.M4 += 4.0*delta*(a.n*b.M3 - b.n*a.M3) / combined.n
 
         combined.M5 = a.M5 + b.M5
         combined.minimum = a.minimum if a.minimum < b.minimum else b.minimum
@@ -147,6 +147,9 @@ cdef class StatsAccumulator:
         Bayes approximations to confidence intervals from
         scipy.stats.bayes_mvs.
         """
+        
+        cdef double xbar, C, fac, val
+        cdef long long n, nm1
         if alpha >= 1 or alpha <= 0:
             raise ValueError(
                 "0 < alpha < 1 is required, but alpha=%s was given." % alpha)
@@ -157,16 +160,14 @@ cdef class StatsAccumulator:
         xbar = self.mean()
         C = self.var()
         if n > 1000:  # gaussian approximations for large n
-            md = distributions.norm(loc=xbar, scale=math.sqrt(C/n))
-            sd = distributions.norm(loc=math.sqrt(C),
-                                    scale=math.sqrt(C/(2.*n)))
-            vd = distributions.norm(loc=C, scale=math.sqrt(2.0/n)*C)
+            md = scipy.stats.distributions.norm(loc=xbar, scale=cymath.sqrt(C/n))
+            sd = scipy.stats.distributions.norm(loc=cymath.sqrt(C), scale=cymath.sqrt(C/(2.*n)))
+            vd = scipy.stats.distributions.norm(loc=C, scale=cymath.sqrt(2.0/n)*C)
         else:
             nm1 = n-1
             fac = n*C/2.
             val = nm1/2.
-            md = distributions.t(nm1, loc=xbar, scale=math.sqrt(C/nm1))
-            sd = distributions.gengamma(val, -2, scale=math.sqrt(fac))
-            vd = distributions.invgamma(val, scale=fac)
-            sdist.mean()
+            md = scipy.stats.distributions.t(nm1, loc=xbar, scale=cymath.sqrt(C/nm1))
+            sd = scipy.stats.distributions.gengamma(val, -2, scale=cymath.sqrt(fac))
+            vd = scipy.stats.distributions.invgamma(val, scale=fac)
         return tuple((x.mean(), x.interval(alpha)) for x in [md, vd, sd])

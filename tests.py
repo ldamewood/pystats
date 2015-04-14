@@ -4,7 +4,6 @@ import numpy as np
 import pystats
 import scipy.stats as stats
 
-
 def check_same(a, b):
     assert_equal(a.size, b.size)
     assert_equal(a.min(), b.min())
@@ -18,7 +17,7 @@ def check_same(a, b):
 
 class TestPyStats(object):
     def test_accumulate(self):
-        a = pystats.StatsAccumulator()
+        a = pystats.Accumulator()
         for i in xrange(100):
             a.push(i)
         b = np.array(xrange(100))
@@ -27,14 +26,14 @@ class TestPyStats(object):
         assert_equal(stats.kurtosis(b), a.kurtosis())
 
     def test_copy(self):
-        a = pystats.StatsAccumulator()
+        a = pystats.Accumulator()
         for i in xrange(100):
             a.push(i)
         b = a.copy()
         check_same(a, b)
 
     def test_add(self):
-        a = pystats.StatsAccumulator()
+        a = pystats.Accumulator()
         for i in xrange(100):
             a.push(i)
         b = a.copy()
@@ -45,7 +44,7 @@ class TestPyStats(object):
         assert_equal(stats.kurtosis(d), c.kurtosis())
 
     def test_iadd(self):
-        a = pystats.StatsAccumulator()
+        a = pystats.Accumulator()
         for i in xrange(100):
             a.push(i)
         b = a.copy()
@@ -55,17 +54,17 @@ class TestPyStats(object):
 
     def test_init1(self):
         a = xrange(10)
-        b = pystats.StatsAccumulator(a)
+        b = pystats.Accumulator(a)
         assert_equal(len(b), 10)
 
     def test_init2(self):
         a = np.array(xrange(10))
-        b = pystats.StatsAccumulator(a)
+        b = pystats.Accumulator(a)
         assert_equal(len(b), 10)
 
     def test_init3(self):
-        a = pystats.StatsAccumulator()
+        a = pystats.Accumulator()
         for i in xrange(10):
             a.push(i)
-        b = pystats.StatsAccumulator(a)
+        b = pystats.Accumulator(a)
         check_same(a, b)
