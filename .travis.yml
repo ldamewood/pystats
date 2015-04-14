@@ -4,7 +4,7 @@ sudo: required
 matrix:
   include:
     - python: 2.7
-      env: NUMPY=1.9 SCIPY=0.15
+      env: NUMPY=1.9 SCIPY=0.15 CYTHON=0.22
       
 before_install:
   - sudo apt-get update
@@ -18,7 +18,7 @@ before_install:
 install:
   - conda create -q --yes -n test python=$TRAVIS_PYTHON_VERSION
   - source activate test
-  - conda install -q --yes numpy=$NUMPY scipy=$SCIPY
+  - conda install -q --yes numpy=$NUMPY scipy=$SCIPY cython=$CYTHON
   - python setup.py install
 
 script:
