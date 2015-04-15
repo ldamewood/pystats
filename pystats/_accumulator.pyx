@@ -35,9 +35,9 @@ cdef class Accumulator:
         self.maximum = max(lst)
         self.M1 = scipy.mean(lst)
         self.M2 = self.n * scipy.var(lst)
-        self.M3 = scipy.skew(lst)*cymath.pow(self.M2, 1.5)
+        self.M3 = scipy.stats.skew(lst)*cymath.pow(self.M2, 1.5)
         self.M3 *= cymath.sqrt(1.*self.n)
-        self.M4 = (scipy.kurtosis(lst) + 3.) * (self.M2*self.M2) / self.n
+        self.M4 = (scipy.stats.kurtosis(lst) + 3.) * (self.M2*self.M2) / self.n
         self.M5 = sum(lst)
 
     def copy(self, out=None):
@@ -68,10 +68,8 @@ cdef class Accumulator:
         self.M3 += term1 * delta_n * (n - 2) - 3 * delta_n * self.M2
         self.M2 += term1
         self.M5 += x
-        if x < self.minimum:
-            self.minimum = x
-        if x > self.maximum:
-            self.maximum = x
+        self.minimum = min(self.minimum, x)
+        self.maximum = max(self.maximum, x)
         return self
 
     def __add__(a, b):
@@ -102,8 +100,8 @@ cdef class Accumulator:
         combined.M4 += 4.0*delta*(a.n*b.M3 - b.n*a.M3) / combined.n
 
         combined.M5 = a.M5 + b.M5
-        combined.minimum = a.minimum if a.minimum < b.minimum else b.minimum
-        combined.maximum = a.maximum if a.maximum > b.maximum else b.maximum
+        combined.minimum = min(a.minimum, b.minimum)
+        combined.maximum = max(a.maximum, b.maximum)
 
         return combined
 

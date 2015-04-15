@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-from distutils.core import setup
-from distutils.extension import Extension
+import os
+from setuptools import setup, Extension, find_packages
 
 try:
     from Cython.Distutils import build_ext
@@ -10,26 +10,33 @@ except ImportError:
 else:
     use_cython = True
 
-kwds = {'long_description': open('README.md').read()}
+# Utility function to read the README file.
+# Used for the long_description.  It's nice, because now 1) we have a top level
+# README file and 2) it's easier to type in the README file than to put a raw
+# string in below ...
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 macros = []
-cmdclass = {}
+cmdclass={}
 if use_cython:
     print("Compiling with Cython")
-    ext_modules = [Extension('_accumulator', ["_accumulator.pyx"], define_macros=macros)]
+    ext_modules = [Extension('pystats._accumulator', ["pystats/_accumulator.pyx"], define_macros=macros)]
     cmdclass.update({'build_ext': build_ext})
 else:
-    ext_modules = [Extension('_accumulator', ['_accumulator.c'])]
+    ext_modules = [Extension('pystats._accumulator', ['pystats/_accumulator.c'])]
 
 setup(name='pystats',
       version='0.2.dev',
       author="Liam Damewood",
+      author_email="liam.physics82@gmail.com",
       description="Statistics Accumulator",
       url="http://github.org/ldamewood/pystats",
-      license='The MIT License: http://www.opensource.org/licenses/mit-license.php',
+      license='MIT',
       cmdclass = cmdclass,
       ext_modules = ext_modules,
-      py_modules=['pystats'],
+      packages=find_packages(exclude=['tests.*']),
+      test_suite='nose.collector',
       classifiers = [
         'Development Status :: 3 - Alpha',
         "Topic :: Scientific/Engineering", 
@@ -38,6 +45,4 @@ setup(name='pystats',
         "Intended Audience :: Science/Research",
         "Programming Language :: Python",
         "License :: OSI Approved :: MIT License"
-      ],
-      **kwds
-      )
+      ])

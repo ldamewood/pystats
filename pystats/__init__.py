@@ -22,12 +22,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
-
 __author__ = "Liam Damewood"
-
 __version__ = "0.2.dev"
 
-from _accumulator import *
-import _accumulator as ac
+from ._accumulator import Accumulator
 
 __all__ = ['Accumulator']
